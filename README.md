@@ -8,6 +8,14 @@ variables set, you just run the script, no input.
 
 This so you can automate the process, instead of manual input.
 
+## Install
+
+You can copy the script to you environment and run it, or you could install it:
+
+```shell
+pip install open-webui-sqlite-migration
+```
+
 ## Configuration
 
 Before anything else, backup you SQLite database and keep it in a safe place.
