@@ -1,6 +1,6 @@
 [project]
 name = "open-webui-sqlite-migration"
-version = "0.1.0"
+version = "0.1.1"
 description = "Migrate Open WebUI from SQLite to PostgreSQL"
 readme = "README.md"
 license = { text = "MIT" }
