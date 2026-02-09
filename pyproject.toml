@@ -23,3 +23,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
 package-mode = true
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.0"
+pytest-mock = "^3.12"

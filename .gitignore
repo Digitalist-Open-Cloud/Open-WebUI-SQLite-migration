@@ -1,1 +1,3 @@
 dist
+tests/__pycache__
+open_webui_sqlite_migration/__pycache__
