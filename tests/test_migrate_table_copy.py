@@ -1,3 +1,5 @@
+"""Test migrate table"""
+
 import sqlite3
 import csv
 from io import StringIO

@@ -1,3 +1,5 @@
+"""Test env exception"""
+
 import pytest
 
 from open_webui_sqlite_migration.migrate import env
@@ -23,4 +25,3 @@ def test_env_invalid_cast_raises_runtime_error(monkeypatch):
         env("TEST_ENV", cast=int)
 
     assert "Invalid value for TEST_ENV" in str(exc.value)
-

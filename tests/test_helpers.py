@@ -1,3 +1,5 @@
+"""Test helper functions"""
+
 from open_webui_sqlite_migration.migrate import pg_ident, normalize_row
 
 def test_pg_ident_reserved():

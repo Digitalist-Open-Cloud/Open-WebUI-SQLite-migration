@@ -1,3 +1,5 @@
+"""Test parse arguments"""
+
 import sys
 from open_webui_sqlite_migration.migrate import parse_args
 

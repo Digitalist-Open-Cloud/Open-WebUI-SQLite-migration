@@ -79,6 +79,12 @@ poetry run pytest
 poetry run pytest --cov
 ```
 
+### Linting
+
+```shell
+poetry run pylint $(git ls-files '*.py')
+```
+
 ## License
 
 MIT

@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.1.3] - 2026-02-09
+
+### Added
+
+- Picky cleanup.
+
 ## [0.1.2] - 2026-02-09
 
 ### Added

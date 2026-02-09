@@ -1,3 +1,5 @@
+"""Test SQLite tables and schema"""
+
 import sqlite3
 from open_webui_sqlite_migration.migrate import sqlite_tables, sqlite_schema
 

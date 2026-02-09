@@ -1,3 +1,5 @@
+"""Test Postgres connection"""
+
 from unittest.mock import MagicMock
 
 import psycopg2

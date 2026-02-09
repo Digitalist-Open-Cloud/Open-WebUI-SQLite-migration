@@ -1,3 +1,5 @@
+"""Test Postgres columns"""
+
 from unittest.mock import MagicMock
 
 from open_webui_sqlite_migration.migrate import pg_column_types

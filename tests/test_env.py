@@ -1,3 +1,5 @@
+"""Test env variables"""
+
 import pytest
 from open_webui_sqlite_migration.migrate import env
 
