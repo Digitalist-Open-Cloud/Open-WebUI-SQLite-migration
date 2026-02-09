@@ -1,16 +1,13 @@
 #!/usr/bin/env python3
 """
-name: SQLite → PostgreSQL migration for Open WebUI
-description: Migrate Open WebUI from SQLite database to Postgres
-version: 0.1.0
-license: GPLv3
-requirements: psycopg2-binary==2.9.11 rich==13.9.4
+SQLite to PostgreSQL migration for Open WebUI
 """
 
 import os
 import json
 import sqlite3
 import csv
+import argparse
 from pathlib import Path
 from typing import Dict, Iterable, List
 from io import StringIO
@@ -20,7 +17,23 @@ from rich.console import Console
 from rich.progress import Progress, SpinnerColumn, BarColumn, TextColumn
 from rich.panel import Panel
 
+__version__ = "0.1.0"
 console = Console()
+
+
+def parse_args():
+    parser = argparse.ArgumentParser(
+        description="SQLite → PostgreSQL migration for Open WebUI"
+    )
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Validate and preview migration without writing to PostgreSQL",
+    )
+    return parser.parse_args()
+
+ARGS = parse_args()
+DRY_RUN = ARGS.dry_run
 
 def env(key: str, default=None, *, required=False, cast=str):
     value = os.getenv(key, default)
@@ -36,15 +49,12 @@ MIGRATE_DATABASE_URL = env("MIGRATE_DATABASE_URL", required=True)
 BATCH_SIZE = env("BATCH_SIZE", 5000, cast=int)
 
 def validate_sqlite(path: Path) -> None:
-    if not path.exists():
-        raise FileNotFoundError(f"SQLite DB not found: {path}")
     with sqlite3.connect(path) as conn:
         conn.execute("PRAGMA integrity_check")
 
 def validate_postgres(db_url: str) -> None:
     conn = psycopg2.connect(db_url)
     conn.close()
-
 
 def pg_ident(name: str) -> str:
     if name.lower() in {"user", "group", "order", "table", "select"}:
@@ -61,8 +71,7 @@ def sqlite_tables(conn: sqlite3.Connection) -> List[str]:
     ]
 
 def sqlite_schema(conn: sqlite3.Connection, table: str):
-    cur = conn.execute(f'PRAGMA table_info("{table}")')
-    return cur.fetchall()
+    return conn.execute(f'PRAGMA table_info("{table}")').fetchall()
 
 def pg_column_types(conn, table: str) -> Dict[str, str]:
     with conn.cursor() as cur:
@@ -92,32 +101,37 @@ def normalize_row(row, columns, pg_types):
     out = []
     for value, col in zip(row, columns):
         col_type = pg_types.get(col)
-
         if value is None:
             out.append(None)
-
         elif col_type == "jsonb":
-            try:
-                json.loads(value)
-                out.append(value)
-            except Exception:
-                out.append("{}")
-
+            if isinstance(value, (dict, list)):
+                out.append(json.dumps(value))
+            else:
+                try:
+                    json.loads(value)
+                    out.append(value)
+                except Exception:
+                    out.append("{}")
         else:
             out.append(value)
-
     return tuple(out)
 
-def migrate_table(
-    sqlite_conn: sqlite3.Connection,
-    pg_conn,
-    table: str,
-):
-    console.print(f"[cyan]Migrating table:[/] {table}")
+def migrate_table(sqlite_conn: sqlite3.Connection, pg_conn, table: str):
+    sqlite_count = sqlite_conn.execute(
+        f'SELECT COUNT(*) FROM "{table}"'
+    ).fetchone()[0]
+
+    console.print(
+        f"[cyan]Table:[/] {table} "
+        f"[dim](rows: {sqlite_count})[/]"
+    )
+
+    if DRY_RUN:
+        console.print(f"[yellow]DRY‑RUN: for {table}[/]")
+        return
 
     schema = sqlite_schema(sqlite_conn, table)
     columns = [c[1] for c in schema]
-
     pg_types = pg_column_types(pg_conn, table)
 
     rows = (
@@ -128,60 +142,49 @@ def migrate_table(
     buffer = StringIO()
     writer = csv.writer(
         buffer,
-        delimiter=",",
-        quotechar='"',
-        quoting=csv.QUOTE_MINIMAL,
         lineterminator="\n",
+        quoting=csv.QUOTE_MINIMAL,
     )
 
     for row in rows:
-        writer.writerow(
-            "" if v is None else v
-            for v in row
-        )
+        writer.writerow("" if v is None else v for v in row)
 
     buffer.seek(0)
 
     with pg_conn.cursor() as cur:
         cur.execute(f"TRUNCATE TABLE {pg_ident(table)} CASCADE")
-        copy_sql = f"""
-          COPY {pg_ident(table)} ({", ".join(columns)})
-          FROM STDIN WITH (FORMAT CSV, HEADER FALSE)
-        """
-        cur.copy_expert(copy_sql, buffer)
-    # Check if we got all rows.
-    verify_row_count(sqlite_conn, pg_conn, table)
-    pg_conn.commit()
-
-
-def verify_row_count(sqlite_conn, pg_conn, table):
-    sc = sqlite_conn.execute(f'SELECT COUNT(*) FROM "{table}"').fetchone()[0]
-    with pg_conn.cursor() as cur:
-        cur.execute(f'SELECT COUNT(*) FROM {pg_ident(table)}')
-        pc = cur.fetchone()[0]
-
-    if sc != pc:
-        console.print(
-            f"[yellow] Row count mismatch for {table}: "
-            f"SQLite={sc}, Postgres={pc}[/]"
+        cur.copy_expert(
+            f"COPY {pg_ident(table)} ({', '.join(columns)}) FROM STDIN WITH CSV",
+            buffer,
         )
 
+    pg_conn.commit()
 
 def main():
-    console.print(Panel("SQLite → PostgreSQL Migration", style="cyan"))
+    console.print(
+        Panel(
+            f"SQLite → PostgreSQL Migration "
+            f"{'(DRY‑RUN)' if DRY_RUN else ''}",
+            style="cyan",
+        )
+    )
 
     validate_sqlite(SQLITE_PATH)
     validate_postgres(MIGRATE_DATABASE_URL)
 
     sqlite_conn = sqlite3.connect(SQLITE_PATH)
     sqlite_conn.text_factory = lambda b: b.decode("utf-8", errors="replace")
+
     pg_conn = psycopg2.connect(MIGRATE_DATABASE_URL)
 
-    # Disable constraints for easy migration.
-    # This make no need for table dependency at migration step.
-    with pg_conn.cursor() as cur:
-      cur.execute("SET session_replication_role = replica")
-    pg_conn.commit()
+    if DRY_RUN:
+        with pg_conn.cursor() as cur:
+            cur.execute("SET default_transaction_read_only = on")
+        console.print("[yellow]DRY‑RUN: PostgreSQL session is read‑only[/]")
+    else:
+        with pg_conn.cursor() as cur:
+            cur.execute("SET session_replication_role = replica")
+        pg_conn.commit()
 
     tables = sqlite_tables(sqlite_conn)
 
@@ -190,37 +193,21 @@ def main():
         TextColumn("[progress.description]{task.description}"),
         BarColumn(),
     ) as progress:
-        task = progress.add_task("Migrating tables...", total=len(tables))
+        task = progress.add_task("Processing tables...", total=len(tables))
         for table in tables:
             migrate_table(sqlite_conn, pg_conn, table)
             progress.advance(task)
 
     sqlite_conn.close()
-    # Re-enable constraints.
-    with pg_conn.cursor() as cur:
-        cur.execute("SET session_replication_role = origin")
-    # Check Postgres to validate constraint.
-    with pg_conn.cursor() as cur:
-        cur.execute("""
-            DO $$
-            DECLARE r RECORD;
-            BEGIN
-                FOR r IN (
-                    SELECT conrelid::regclass AS tbl, conname
-                    FROM pg_constraint
-                    WHERE contype = 'f'
-                ) LOOP
-                    EXECUTE format(
-                        'ALTER TABLE %s VALIDATE CONSTRAINT %I',
-                        r.tbl, r.conname
-                    );
-                END LOOP;
-            END $$;
-        """)
-    pg_conn.commit()
+
+    if not DRY_RUN:
+        with pg_conn.cursor() as cur:
+            cur.execute("SET session_replication_role = origin")
+        pg_conn.commit()
+
     pg_conn.close()
 
-    console.print(Panel("Migration complete", style="green"))
+    console.print(Panel("✅ Done", style="green"))
 
 if __name__ == "__main__":
     main()

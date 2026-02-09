@@ -1,0 +1,25 @@
+[project]
+name = "open-webui-sqlite-migration"
+version = "0.1.0"
+description = "Migrate Open WebUI from SQLite to PostgreSQL"
+readme = "README.md"
+license = { text = "MIT" }
+authors = [
+    { name = "Mikke Schirén", email = "mikke.schiren@digitalist.com" }
+]
+requires-python = ">=3.11"
+
+dependencies = [
+    "psycopg2-binary>=2.9.11",
+    "rich>=13.9.4"
+]
+
+[project.scripts]
+open-webui-migrate-sqlite = "open_webui_sqlite_migration.migrate:main"
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry]
+package-mode = true
