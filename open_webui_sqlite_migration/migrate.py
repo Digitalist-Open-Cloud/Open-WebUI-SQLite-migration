@@ -24,7 +24,7 @@ console = Console()
 def parse_args():
     """Parse arguments."""
     parser = argparse.ArgumentParser(
-        description="SQLite → PostgreSQL migration for Open WebUI",
+        description="SQLite to PostgreSQL migration for Open WebUI",
         add_help=True,
     )
     parser.add_argument(
@@ -139,7 +139,7 @@ def migrate_table(sqlite_conn: sqlite3.Connection, pg_conn, table: str):
     )
 
     if DRY_RUN:
-        console.print(f"[yellow]DRY‑RUN: for {table}[/]")
+        console.print(f"[yellow]DRY-RUN for {table}[/]")
         return
 
     schema = sqlite_schema(sqlite_conn, table)
@@ -179,8 +179,8 @@ def main():
     DRY_RUN = args.dry_run
     console.print(
         Panel(
-            f"SQLite → PostgreSQL Migration "
-            f"{'(DRY‑RUN)' if DRY_RUN else ''}",
+            f"SQLite to PostgreSQL Migration "
+            f"{'(DRY-RUN)' if DRY_RUN else ''}",
             style="cyan",
         )
     )
@@ -196,7 +196,7 @@ def main():
     if DRY_RUN:
         with pg_conn.cursor() as cur:
             cur.execute("SET default_transaction_read_only = on")
-        console.print("[yellow]DRY‑RUN: PostgreSQL session is read‑only[/]")
+        console.print("[yellow]DRY-RUN: PostgreSQL session is read-only[/]")
     else:
         with pg_conn.cursor() as cur:
             cur.execute("SET session_replication_role = replica")
