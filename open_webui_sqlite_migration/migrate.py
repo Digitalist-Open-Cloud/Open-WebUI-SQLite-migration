@@ -23,17 +23,18 @@ console = Console()
 
 def parse_args():
     parser = argparse.ArgumentParser(
-        description="SQLite → PostgreSQL migration for Open WebUI"
+        description="SQLite → PostgreSQL migration for Open WebUI",
+        add_help=True,
     )
     parser.add_argument(
         "--dry-run",
         action="store_true",
         help="Validate and preview migration without writing to PostgreSQL",
     )
-    return parser.parse_args()
+    args, _ = parser.parse_known_args()
+    return args
 
-ARGS = parse_args()
-DRY_RUN = ARGS.dry_run
+DRY_RUN = False
 
 def env(key: str, default=None, *, required=False, cast=str):
     value = os.getenv(key, default)
@@ -161,6 +162,9 @@ def migrate_table(sqlite_conn: sqlite3.Connection, pg_conn, table: str):
     pg_conn.commit()
 
 def main():
+    global DRY_RUN
+    args = parse_args()
+    DRY_RUN = args.dry_run
     console.print(
         Panel(
             f"SQLite → PostgreSQL Migration "

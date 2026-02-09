@@ -27,3 +27,18 @@ package-mode = true
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.0"
 pytest-mock = "^3.12"
+pytest-cov = "^5.0"
+
+[tool.coverage.run]
+branch = true
+source = ["open_webui_sqlite_migration"]
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = true
+fail_under = 85
+exclude_lines = [
+    "pragma: no cover",
+    "if __name__ == .__main__.:",
+    "def main",
+]

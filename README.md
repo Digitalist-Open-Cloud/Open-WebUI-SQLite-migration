@@ -71,7 +71,14 @@ export MIGRATE_DATABASE_URL=postgresql://user:pass@postgres:5432/openwebui
 poetry run pytest
 ```
 
+### Coverage
+
+```shell
+poetry run pytest --cov
+```
+
 ## License
 
 MIT
+
 Copyright (c) Digitalist Open Cloud.
