@@ -7,8 +7,6 @@ license: GPLv3
 requirements: psycopg2-binary==2.9.11 rich==13.9.4
 """
 
-from __future__ import annotations
-
 import os
 import json
 import sqlite3
@@ -18,7 +16,6 @@ from typing import Dict, Iterable, List
 from io import StringIO
 
 import psycopg2
-from psycopg2.extras import execute_batch
 from rich.console import Console
 from rich.progress import Progress, SpinnerColumn, BarColumn, TextColumn
 from rich.panel import Panel
@@ -152,8 +149,23 @@ def migrate_table(
           FROM STDIN WITH (FORMAT CSV, HEADER FALSE)
         """
         cur.copy_expert(copy_sql, buffer)
-
+    # Check if we got all rows.
+    verify_row_count(sqlite_conn, pg_conn, table)
     pg_conn.commit()
+
+
+def verify_row_count(sqlite_conn, pg_conn, table):
+    sc = sqlite_conn.execute(f'SELECT COUNT(*) FROM "{table}"').fetchone()[0]
+    with pg_conn.cursor() as cur:
+        cur.execute(f'SELECT COUNT(*) FROM {pg_ident(table)}')
+        pc = cur.fetchone()[0]
+
+    if sc != pc:
+        console.print(
+            f"[yellow] Row count mismatch for {table}: "
+            f"SQLite={sc}, Postgres={pc}[/]"
+        )
+
 
 def main():
     console.print(Panel("SQLite → PostgreSQL Migration", style="cyan"))
@@ -187,7 +199,7 @@ def main():
     # Re-enable constraints.
     with pg_conn.cursor() as cur:
         cur.execute("SET session_replication_role = origin")
-    # Check Postgres.
+    # Check Postgres to validate constraint.
     with pg_conn.cursor() as cur:
         cur.execute("""
             DO $$
