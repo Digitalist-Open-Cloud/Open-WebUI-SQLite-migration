@@ -5,6 +5,7 @@ from open_webui_sqlite_migration import migrate
 
 
 def test_migrate_table_dry_run(monkeypatch):
+    """Test dry-run argument."""
     # Force dry-run
     monkeypatch.setattr(migrate, "DRY_RUN", True)
 

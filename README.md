@@ -1,5 +1,7 @@
 # Migrate tool for OpenWebUI SQLite
 
+![Tests](https://github.com/Digitalist-Open-Cloud/Open-WebUI-SQLite-migration/actions/workflows/tests.yml/badge.svg)
+
 Migrate from using SQLite database in Open WebUI to use Postgres.
 
 Inspiration from: <https://github.com/taylorwilsdon/open-webui-postgres-migration>,

@@ -22,6 +22,7 @@ console = Console()
 
 
 def parse_args():
+    """Parse arguments."""
     parser = argparse.ArgumentParser(
         description="SQLite → PostgreSQL migration for Open WebUI",
         add_help=True,
@@ -37,6 +38,7 @@ def parse_args():
 DRY_RUN = False
 
 def env(key: str, default=None, *, required=False, cast=str):
+    """Get required environment variables."""
     value = os.getenv(key, default)
     if required and value is None:
         raise RuntimeError(f"Missing environment variable: {key}")
@@ -50,19 +52,23 @@ MIGRATE_DATABASE_URL = env("MIGRATE_DATABASE_URL", required=True)
 BATCH_SIZE = env("BATCH_SIZE", 5000, cast=int)
 
 def validate_sqlite(path: Path) -> None:
+    """Validate connection to SQLite."""
     with sqlite3.connect(path) as conn:
         conn.execute("PRAGMA integrity_check")
 
 def validate_postgres(db_url: str) -> None:
+    """Validate connection to Postgres."""
     conn = psycopg2.connect(db_url)
     conn.close()
 
 def pg_ident(name: str) -> str:
+    """Protected postgres names."""
     if name.lower() in {"user", "group", "order", "table", "select"}:
         return f'"{name}"'
     return name
 
 def sqlite_tables(conn: sqlite3.Connection) -> List[str]:
+    """Get SQLite tables."""
     cur = conn.execute(
         "SELECT name FROM sqlite_master WHERE type='table'"
     )
@@ -72,9 +78,11 @@ def sqlite_tables(conn: sqlite3.Connection) -> List[str]:
     ]
 
 def sqlite_schema(conn: sqlite3.Connection, table: str):
+    """Get SQLite schema."""
     return conn.execute(f'PRAGMA table_info("{table}")').fetchall()
 
 def pg_column_types(conn, table: str) -> Dict[str, str]:
+    """Postgres column types."""
     with conn.cursor() as cur:
         cur.execute("""
             SELECT column_name, data_type
@@ -89,6 +97,7 @@ def stream_sqlite_rows(
     table: str,
     columns: List[str],
 ) -> Iterable[tuple]:
+    """Stream rows from SQLite."""
     col_sql = ", ".join(f'"{c}"' for c in columns)
     cur = conn.execute(f'SELECT {col_sql} FROM "{table}"')
     while True:
@@ -99,6 +108,7 @@ def stream_sqlite_rows(
             yield row
 
 def normalize_row(row, columns, pg_types):
+    """Normalize DB row in Postgres."""
     out = []
     for value, col in zip(row, columns):
         col_type = pg_types.get(col)
@@ -118,6 +128,7 @@ def normalize_row(row, columns, pg_types):
     return tuple(out)
 
 def migrate_table(sqlite_conn: sqlite3.Connection, pg_conn, table: str):
+    """Migrate table from SQLite to Postgres."""
     sqlite_count = sqlite_conn.execute(
         f'SELECT COUNT(*) FROM "{table}"'
     ).fetchone()[0]
@@ -162,6 +173,7 @@ def migrate_table(sqlite_conn: sqlite3.Connection, pg_conn, table: str):
     pg_conn.commit()
 
 def main():
+    """Run the script."""
     global DRY_RUN
     args = parse_args()
     DRY_RUN = args.dry_run
