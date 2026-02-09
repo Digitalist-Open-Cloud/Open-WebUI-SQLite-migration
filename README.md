@@ -1,4 +1,4 @@
-# Migrate tool for OpenWebUI SQLite to Postgres
+# Migrate tool for Open WebUI - SQLite to Postgres
 
 ![Python](https://img.shields.io/badge/python-3.11%20%7C%203.12%20%7C%203.13-blue) [![Tests & Coverage](https://github.com/Digitalist-Open-Cloud/Open-WebUI-SQLite-migration/actions/workflows/tests.yaml/badge.svg)](https://github.com/Digitalist-Open-Cloud/Open-WebUI-SQLite-migration/actions/workflows/tests.yaml)
 
