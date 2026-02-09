@@ -2,11 +2,11 @@
 
 ![Python](https://img.shields.io/badge/python-3.11%20%7C%203.12%20%7C%203.13-blue) [![Tests & Coverage](https://github.com/Digitalist-Open-Cloud/Open-WebUI-SQLite-migration/actions/workflows/tests.yaml/badge.svg)](https://github.com/Digitalist-Open-Cloud/Open-WebUI-SQLite-migration/actions/workflows/tests.yaml)
 
-Migrate from using SQLite database in Open WebUI to use Postgres.
+Migrate from using SQLite (default) in Open WebUI to use Postgres.
 
 Inspiration from: <https://github.com/taylorwilsdon/open-webui-postgres-migration>,
-one of the big differences is that the migration require no input, with environment
-variables set, you just run the script, no input.
+one of the big differences is that this migration require no input, configurable
+with environment variables, you just run the script, no input needed.
 
 This so you can automate the process, instead of manual input.
 
@@ -35,7 +35,8 @@ should.
 
 ## Migration
 
-- Again - make sure you backup your SQLite database, before doing anything.
+- Make sure you backup your SQLite database, before doing anything.
+- Set `SQLITE_DB_PATH` and `MIGRATE_DATABASE_URL`
 - Start Open WebUI with SQLite if it's not running (info logs should say: `Context impl SQLiteImpl`).
 - Stop Open WebUI.
 - Start Open WebUI with `DATABASE_URL` set. Needed tables should be created.
