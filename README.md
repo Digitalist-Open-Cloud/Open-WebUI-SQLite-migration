@@ -31,6 +31,23 @@ then you stop Open WebUI, and then again set `DATABASE_URL`. If everything now r
 SQLite database. Keep a backup of the database until you are really sure that all things are working as they
 should.
 
+## Development
+
+Poetry is used.
+
+```shell
+poetry install
+```
+
+Release:
+
+Make sure to change version, then:
+
+```shell
+poetry build
+poetry publish
+```
+
 ## License
 
 MIT
