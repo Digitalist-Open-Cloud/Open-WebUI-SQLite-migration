@@ -1,7 +1,8 @@
 [project]
 name = "open-webui-sqlite-migration"
-version = "0.1.1"
+version = "0.1.2"
 description = "Migrate Open WebUI from SQLite to PostgreSQL"
+keywords = ["open-webui", "sqlite", "postgres"]
 readme = "README.md"
 license = { text = "MIT" }
 authors = [
@@ -16,6 +17,13 @@ dependencies = [
 
 [project.scripts]
 open-webui-migrate-sqlite = "open_webui_sqlite_migration.migrate:main"
+
+
+[project.urls]
+Homepage = "https://digitalist.cloud"
+Repository = "https://github.com/Digitalist-Open-Cloud/Open-WebUI-SQLite-migration.git"
+Issues = "https://github.com/Digitalist-Open-Cloud/Open-WebUI-SQLite-migration/issues"
+Changelog = "https://github.com/me/spam/blob/main/CHANGELOG.md"
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
@@ -42,3 +50,4 @@ exclude_lines = [
     "if __name__ == .__main__.:",
     "def main",
 ]
+

@@ -17,7 +17,7 @@ from rich.console import Console
 from rich.progress import Progress, SpinnerColumn, BarColumn, TextColumn
 from rich.panel import Panel
 
-__version__ = "0.1.1"
+__version__ = "0.1.2"
 console = Console()
 
 
