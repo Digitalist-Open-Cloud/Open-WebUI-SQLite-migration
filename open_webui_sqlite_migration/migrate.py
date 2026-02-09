@@ -207,7 +207,7 @@ def main():
 
     pg_conn.close()
 
-    console.print(Panel("✅ Done", style="green"))
+    console.print(Panel("Done", style="green"))
 
 if __name__ == "__main__":
     main()
