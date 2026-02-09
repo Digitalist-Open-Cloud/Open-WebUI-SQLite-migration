@@ -23,3 +23,17 @@ def test_normalize_row_dict():
     columns = ["data"]
     pg_types = {"data": "jsonb"}
     assert normalize_row(row, columns, pg_types) == ('{"a": 1}',)
+
+def test_normalize_row_none_value():
+    row = (None,)
+    columns = ["data"]
+    pg_types = {"data": "jsonb"}  # type shouldn't matter for None
+
+    assert normalize_row(row, columns, pg_types) == (None,)
+
+def test_normalize_row_none_mixed_with_other_values():
+    row = (None, '{"a": 1}')
+    columns = ["meta", "data"]
+    pg_types = {"meta": "jsonb", "data": "jsonb"}
+
+    assert normalize_row(row, columns, pg_types) == (None, '{"a": 1}')

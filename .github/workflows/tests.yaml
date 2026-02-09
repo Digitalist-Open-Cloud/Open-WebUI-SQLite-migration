@@ -1,0 +1,50 @@
+name: Tests & Coverage
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        python-version: ["3.11", "3.12"]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install Poetry
+        run: |
+          pip install poetry
+
+      - name: Install dependencies
+        run: |
+          poetry install
+
+      - name: Run tests with coverage
+        run: |
+          poetry run pytest --cov --cov-report=term --cov-report=html
+
+      - name: Upload HTML coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-html-${{ matrix.python-version }}
+          path: htmlcov
+
+      - name: Add coverage summary to job
+        run: |
+          echo "## ✅ Test Coverage (Python ${{ matrix.python-version }})" >> $GITHUB_STEP_SUMMARY
+          poetry run coverage report >> $GITHUB_STEP_SUMMARY
