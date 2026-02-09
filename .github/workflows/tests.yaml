@@ -15,7 +15,7 @@ jobs:
 
     strategy:
       matrix:
-        python-version: ["3.11", "3.12"]
+        python-version: ["3.11", "3.12", "3.13"]
 
     steps:
       - name: Checkout repository
@@ -36,6 +36,8 @@ jobs:
 
       - name: Run tests with coverage
         run: |
+          export SQLITE_DB_PATH="/web.db"
+          export MIGRATE_DATABASE_URL="postgresql://openwebui:openwebui@postgres:5432/openwebui"
           poetry run pytest --cov --cov-report=term --cov-report=html
 
       - name: Upload HTML coverage report
@@ -46,5 +48,5 @@ jobs:
 
       - name: Add coverage summary to job
         run: |
-          echo "## ✅ Test Coverage (Python ${{ matrix.python-version }})" >> $GITHUB_STEP_SUMMARY
+          echo "## Test Coverage (Python ${{ matrix.python-version }})" >> $GITHUB_STEP_SUMMARY
           poetry run coverage report >> $GITHUB_STEP_SUMMARY
