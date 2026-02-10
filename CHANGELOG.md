@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.1.5] - 2026-02-10
+
+### Changed
+
+- Changelog URL.
+
 ## [0.1.4] - 2026-02-10
 
 ### Updated
