@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.1.4] - 2026-02-10
+
+### Updated
+
+- Handle big databases better, do not use all the memory.
+
+### Changed
+
+- Copy SQLite database to `/tmp` before running migration.
+
 ## [0.1.3] - 2026-02-09
 
 ### Added

@@ -33,6 +33,11 @@ then you stop Open WebUI, and then again set `DATABASE_URL`. If everything now r
 SQLite database. Keep a backup of the database until you are really sure that all things are working as they
 should.
 
+While you always should have a backup of your SQLite database before starting, the migration itself is done on a
+copy of the SQLite database, to avoid locking etc.
+
+`/tmp` needs to be writeable during the migration.
+
 ## Migration
 
 - Make sure you backup your SQLite database, before doing anything.

@@ -56,4 +56,4 @@ def test_migrate_table_copy_full_path(monkeypatch):
     rows = list(csv.reader(buffer))
     assert rows == [["1", '{"a": 1}']]
 
-    pg_conn.commit.assert_called_once()
+    assert pg_conn.commit.call_count >= 1

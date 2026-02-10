@@ -11,13 +11,17 @@ import argparse
 from pathlib import Path
 from typing import Dict, Iterable, List
 from io import StringIO
+from itertools import islice
+import shutil
+import tempfile
+
 
 import psycopg2
 from rich.console import Console
 from rich.progress import Progress, SpinnerColumn, BarColumn, TextColumn
 from rich.panel import Panel
 
-__version__ = "0.1.3"
+__version__ = "0.1.4"
 console = Console()
 
 
@@ -50,6 +54,23 @@ def env(key: str, default=None, *, required=False, cast=str):
 SQLITE_PATH = Path(env("SQLITE_DB_PATH", required=True))
 MIGRATE_DATABASE_URL = env("MIGRATE_DATABASE_URL", required=True)
 BATCH_SIZE = env("BATCH_SIZE", 5000, cast=int)
+
+def copy_sqlite_db(src: Path) -> Path:
+    """
+    Copy SQLite database (including WAL files if present) to a temp directory.
+    Returns path to copied .db file.
+    """
+    tmp_dir = Path(tempfile.mkdtemp(prefix="openwebui-sqlite-"))
+    dst = tmp_dir / src.name
+
+    shutil.copy2(src, dst)
+
+    for suffix in ("-wal", "-shm"):
+        wal_file = src.with_name(src.name + suffix)
+        if wal_file.exists():
+            shutil.copy2(wal_file, tmp_dir / wal_file.name)
+
+    return dst
 
 def validate_sqlite(path: Path) -> None:
     """Validate connection to SQLite."""
@@ -128,7 +149,6 @@ def normalize_row(row, columns, pg_types):
     return tuple(out)
 
 def migrate_table(sqlite_conn: sqlite3.Connection, pg_conn, table: str):
-    """Migrate table from SQLite to Postgres."""
     sqlite_count = sqlite_conn.execute(
         f'SELECT COUNT(*) FROM "{table}"'
     ).fetchone()[0]
@@ -139,38 +159,48 @@ def migrate_table(sqlite_conn: sqlite3.Connection, pg_conn, table: str):
     )
 
     if DRY_RUN:
-        console.print(f"[yellow]DRY-RUN for {table}[/]")
+        console.print(f"[yellow]DRY-RUN: for {table}[/]")
         return
 
     schema = sqlite_schema(sqlite_conn, table)
     columns = [c[1] for c in schema]
     pg_types = pg_column_types(pg_conn, table)
 
-    rows = (
+    with pg_conn.cursor() as cur:
+        cur.execute(f"TRUNCATE TABLE {pg_ident(table)} CASCADE")
+    pg_conn.commit()
+
+    batch_size = 5_000
+
+    row_iter = (
         normalize_row(row, columns, pg_types)
         for row in stream_sqlite_rows(sqlite_conn, table, columns)
     )
 
-    buffer = StringIO()
-    writer = csv.writer(
-        buffer,
-        lineterminator="\n",
-        quoting=csv.QUOTE_MINIMAL,
-    )
+    while True:
+        batch = list(islice(row_iter, batch_size))
+        if not batch:
+            break
 
-    for row in rows:
-        writer.writerow("" if v is None else v for v in row)
-
-    buffer.seek(0)
-
-    with pg_conn.cursor() as cur:
-        cur.execute(f"TRUNCATE TABLE {pg_ident(table)} CASCADE")
-        cur.copy_expert(
-            f"COPY {pg_ident(table)} ({', '.join(columns)}) FROM STDIN WITH CSV",
+        buffer = StringIO()
+        writer = csv.writer(
             buffer,
+            lineterminator="\n",
+            quoting=csv.QUOTE_MINIMAL,
         )
 
-    pg_conn.commit()
+        for row in batch:
+            writer.writerow("" if v is None else v for v in row)
+
+        buffer.seek(0)
+
+        with pg_conn.cursor() as cur:
+            cur.copy_expert(
+                f"COPY {pg_ident(table)} ({', '.join(columns)}) FROM STDIN WITH CSV",
+                buffer,
+            )
+
+        pg_conn.commit()
 
 def main():
     """Run the script."""
@@ -184,11 +214,15 @@ def main():
             style="cyan",
         )
     )
+    console.print("[cyan]Creating temporary SQLite copy...[/]")
+    sqlite_copy_path = copy_sqlite_db(SQLITE_PATH)
+    console.print(f"[green]Using SQLite copy:[/] {sqlite_copy_path}")
 
-    validate_sqlite(SQLITE_PATH)
+    validate_sqlite(sqlite_copy_path)
     validate_postgres(MIGRATE_DATABASE_URL)
 
-    sqlite_conn = sqlite3.connect(SQLITE_PATH)
+    sqlite_conn = sqlite3.connect(sqlite_copy_path, timeout=60)
+    sqlite_conn.isolation_level = None
     sqlite_conn.text_factory = lambda b: b.decode("utf-8", errors="replace")
 
     pg_conn = psycopg2.connect(MIGRATE_DATABASE_URL)
@@ -215,6 +249,7 @@ def main():
             progress.advance(task)
 
     sqlite_conn.close()
+    shutil.rmtree(sqlite_copy_path.parent, ignore_errors=True)
 
     if not DRY_RUN:
         with pg_conn.cursor() as cur:
