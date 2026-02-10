@@ -23,7 +23,7 @@ open-webui-migrate-sqlite = "open_webui_sqlite_migration.migrate:main"
 Homepage = "https://digitalist.cloud"
 Repository = "https://github.com/Digitalist-Open-Cloud/Open-WebUI-SQLite-migration.git"
 Issues = "https://github.com/Digitalist-Open-Cloud/Open-WebUI-SQLite-migration/issues"
-Changelog = "https://github.com/me/spam/blob/main/CHANGELOG.md"
+Changelog = "https://github.com/Digitalist-Open-Cloud/Open-WebUI-SQLite-migration/blob/main/CHANGELOG.md"
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
