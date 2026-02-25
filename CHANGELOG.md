@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.1.7] - 2026-02-25
+
+### Changed
+
+- Removing batches, created class for handling the data stream.
+
+## [0.1.6] - 2026-02-25
+
+### Changed
+
+- Smaller batches, fix memory usage.
+
 ## [0.1.5] - 2026-02-10
 
 ### Changed

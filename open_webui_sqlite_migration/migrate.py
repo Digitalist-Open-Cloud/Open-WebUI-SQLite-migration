@@ -21,7 +21,7 @@ from rich.console import Console
 from rich.progress import Progress, SpinnerColumn, BarColumn, TextColumn
 from rich.panel import Panel
 
-__version__ = "0.1.5"
+__version__ = "0.1.7"
 console = Console()
 
 
@@ -53,7 +53,6 @@ def env(key: str, default=None, *, required=False, cast=str):
 
 SQLITE_PATH = Path(env("SQLITE_DB_PATH", required=True))
 MIGRATE_DATABASE_URL = env("MIGRATE_DATABASE_URL", required=True)
-BATCH_SIZE = env("BATCH_SIZE", 5000, cast=int)
 
 def copy_sqlite_db(src: Path) -> Path:
     """
@@ -118,11 +117,11 @@ def stream_sqlite_rows(
     table: str,
     columns: List[str],
 ) -> Iterable[tuple]:
-    """Stream rows from SQLite."""
     col_sql = ", ".join(f'"{c}"' for c in columns)
     cur = conn.execute(f'SELECT {col_sql} FROM "{table}"')
+
     while True:
-        rows = cur.fetchmany(BATCH_SIZE)
+        rows = cur.fetchmany(100)  # small fetch window
         if not rows:
             break
         for row in rows:
@@ -148,6 +147,46 @@ def normalize_row(row, columns, pg_types):
             out.append(value)
     return tuple(out)
 
+class CopyStream:
+    """
+    Streaming file-like object for psycopg2 COPY.
+    """
+
+    def __init__(self, row_iter):
+        self.row_iter = row_iter
+        self._buffer = ""
+        self._exhausted = False
+
+    def _next_line(self):
+        try:
+            row = next(self.row_iter)
+        except StopIteration:
+            self._exhausted = True
+            return ""
+
+        output = StringIO()
+        writer = csv.writer(
+            output,
+            lineterminator="\n",
+            quoting=csv.QUOTE_MINIMAL,
+        )
+        writer.writerow("" if v is None else v for v in row)
+        return output.getvalue()
+
+    def read(self, size=8192):
+        if self._exhausted and not self._buffer:
+            return ""
+
+        # Fill buffer until we have enough data or exhausted
+        while len(self._buffer) < size and not self._exhausted:
+            self._buffer += self._next_line()
+
+        # Return up to `size` bytes
+        result = self._buffer[:size]
+        self._buffer = self._buffer[size:]
+
+        return result
+
 def migrate_table(sqlite_conn: sqlite3.Connection, pg_conn, table: str):
     sqlite_count = sqlite_conn.execute(
         f'SELECT COUNT(*) FROM "{table}"'
@@ -165,45 +204,25 @@ def migrate_table(sqlite_conn: sqlite3.Connection, pg_conn, table: str):
     schema = sqlite_schema(sqlite_conn, table)
     columns = [c[1] for c in schema]
     pg_types = pg_column_types(pg_conn, table)
-
     with pg_conn.cursor() as cur:
         cur.execute(f"TRUNCATE TABLE {pg_ident(table)} CASCADE")
     pg_conn.commit()
-
-    batch_size = 5_000
 
     row_iter = (
         normalize_row(row, columns, pg_types)
         for row in stream_sqlite_rows(sqlite_conn, table, columns)
     )
 
-    while True:
-        batch = list(islice(row_iter, batch_size))
-        if not batch:
-            break
-
-        buffer = StringIO()
-        writer = csv.writer(
-            buffer,
-            lineterminator="\n",
-            quoting=csv.QUOTE_MINIMAL,
+    with pg_conn.cursor() as cur:
+        cur.copy_expert(
+            f"COPY {pg_ident(table)} ({', '.join(columns)}) "
+            f"FROM STDIN WITH CSV",
+            CopyStream(row_iter),
         )
-
-        for row in batch:
-            writer.writerow("" if v is None else v for v in row)
-
-        buffer.seek(0)
-
-        with pg_conn.cursor() as cur:
-            cur.copy_expert(
-                f"COPY {pg_ident(table)} ({', '.join(columns)}) FROM STDIN WITH CSV",
-                buffer,
-            )
-
-        pg_conn.commit()
+    pg_conn.commit()
 
 def main():
-    """Run the script."""
+    """ Run the script """
     global DRY_RUN
     args = parse_args()
     DRY_RUN = args.dry_run
@@ -214,6 +233,7 @@ def main():
             style="cyan",
         )
     )
+
     console.print("[cyan]Creating temporary SQLite copy...[/]")
     sqlite_copy_path = copy_sqlite_db(SQLITE_PATH)
     console.print(f"[green]Using SQLite copy:[/] {sqlite_copy_path}")
