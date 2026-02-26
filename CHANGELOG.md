@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.1.8] - 2026-02-26
+
+### Changed
+
+- Fixed bug for streaming copy.
+
 ## [0.1.7] - 2026-02-25
 
 ### Changed

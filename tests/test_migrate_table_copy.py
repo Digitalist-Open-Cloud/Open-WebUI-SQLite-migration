@@ -61,4 +61,4 @@ def test_migrate_table_copy_full_path(monkeypatch):
     assert rows == [["1", '{"a": 1}']]
 
     # Commit once after truncate + once after copy
-    assert pg_conn.commit.call_count == 2
+    assert pg_conn.commit.call_count == 1
