@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.1.9] - 2026-02-26
+
+### Changed
+
+- Improved logging.
+
 ## [0.1.8] - 2026-02-26
 
 ### Changed

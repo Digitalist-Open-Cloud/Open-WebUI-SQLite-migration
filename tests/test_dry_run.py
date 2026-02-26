@@ -23,6 +23,5 @@ def test_migrate_table_dry_run(monkeypatch):
     # Run
     migrate.migrate_table(sqlite_conn, pg_conn, "test")
 
-    # Assert: nothing was written
     pg_conn.cursor.assert_not_called()
     pg_conn.commit.assert_not_called()

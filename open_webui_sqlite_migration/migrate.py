@@ -8,10 +8,10 @@ import json
 import sqlite3
 import csv
 import argparse
+import time
 from pathlib import Path
 from typing import Dict, Iterable, List
 from io import StringIO
-from itertools import islice
 import shutil
 import tempfile
 
@@ -21,7 +21,7 @@ from rich.console import Console
 from rich.progress import Progress, SpinnerColumn, BarColumn, TextColumn
 from rich.panel import Panel
 
-__version__ = "0.1.8"
+__version__ = "0.1.9"
 console = Console()
 
 
@@ -121,7 +121,7 @@ def stream_sqlite_rows(
     cur = conn.execute(f'SELECT {col_sql} FROM "{table}"')
 
     while True:
-        rows = cur.fetchmany(100)  # small fetch window
+        rows = cur.fetchmany(500)
         if not rows:
             break
         for row in rows:
@@ -148,9 +148,7 @@ def normalize_row(row, columns, pg_types):
     return tuple(out)
 
 class CopyStream:
-    """
-    Streaming file-like object for psycopg2 COPY.
-    """
+    """Streaming file-like object for psycopg2 COPY."""
 
     def __init__(self, row_iter):
         self.row_iter = row_iter
@@ -188,6 +186,8 @@ class CopyStream:
         return result
 
 def migrate_table(sqlite_conn: sqlite3.Connection, pg_conn, table: str):
+    """Migrate a table."""
+    start_time = time.time()
     sqlite_count = sqlite_conn.execute(
         f'SELECT COUNT(*) FROM "{table}"'
     ).fetchone()[0]
@@ -219,6 +219,8 @@ def migrate_table(sqlite_conn: sqlite3.Connection, pg_conn, table: str):
             f"FROM STDIN WITH CSV",
             CopyStream(row_iter),
         )
+    elapsed = time.time() - start_time
+    console.print(f"[green]Migrated {table} in {elapsed:.2f}s[/]")
 
 def main():
     """ Run the script """

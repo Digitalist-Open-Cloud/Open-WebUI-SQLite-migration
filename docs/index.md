@@ -1,0 +1,55 @@
+# Migrate tool for Open WebUI - SQLite to Postgres
+
+![Python](https://img.shields.io/badge/python-3.11%20%7C%203.12%20%7C%203.13-blue) [![Tests & Coverage](https://github.com/Digitalist-Open-Cloud/Open-WebUI-SQLite-migration/actions/workflows/tests.yaml/badge.svg)](https://github.com/Digitalist-Open-Cloud/Open-WebUI-SQLite-migration/actions/workflows/tests.yaml)
+
+Migrate from using SQLite (default) in Open WebUI to use Postgres.
+
+Inspiration from: <https://github.com/taylorwilsdon/open-webui-postgres-migration>,
+one of the big differences is that this migration require no input, configurable
+with environment variables, you just run the script, no input needed.
+
+This so you can automate the process, instead of manual input.
+
+## Install
+
+You can copy the script to you environment and run it, or you could install it:
+
+```shell
+pip install open-webui-sqlite-migration
+```
+
+## Configuration
+
+Before anything else, backup you SQLite database and keep it in a safe place.
+
+Needed environment variables:
+
+- `SQLITE_DB_PATH` - exact path to your open webui db, like: `/app/backend/data/webui.db`.
+- `MIGRATE_DATABASE_URL` - normally the same you should use for `DATABASE_URL`, like `postgresql://user:pass@postgres:5432/openwebui`
+
+Also you need to start Open WebUI with `DATABASE_URL`, so needed tables are created. After that,
+you remove that variable so you go back to use SQLite. When using SQLite, you run the migration script,
+then you stop Open WebUI, and then again set `DATABASE_URL`. If everything now runs smoothly, you can remove the
+SQLite database. Keep a backup of the database until you are really sure that all things are working as they
+should.
+
+While you always should have a backup of your SQLite database before starting, the migration itself is done on a
+copy of the SQLite database, to avoid locking etc.
+
+`/tmp` needs to be writeable during the migration.
+
+## Migration
+
+- Make sure you backup your SQLite database, before doing anything.
+- Set `SQLITE_DB_PATH` and `MIGRATE_DATABASE_URL`
+- Start Open WebUI with SQLite if it's not running (info logs should say: `Context impl SQLiteImpl`).
+- Stop Open WebUI.
+- Start Open WebUI with `DATABASE_URL` set. Needed tables should be created.
+- Stop Open WebUI.
+- Remove ENV variable `DATABASE_URL`,  start Open WebUI.
+- Run `open-webui-migrate-sqlite --dry-run`
+- Check output, if what is you expected, go to next step.
+- Have you really done a backup of your SQLite database?
+- Run `open-webui-migrate-sqlite`
+- If all succeeds, restart Open WebUI with `DATABASE_URL` set.
+- You should now be running Open WebUI with Postgres (if you have info logs from Open WebUI, you should see `Context impl PostgresqlImpl`).
