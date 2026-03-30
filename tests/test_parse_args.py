@@ -9,6 +9,7 @@ def test_parse_args_default(monkeypatch):
     assert args.dry_run is False
     assert args.sqlite_counts is False
     assert args.postgres_counts is False
+    assert args.validate is False
 
 def test_parse_args_dry_run(monkeypatch):
     monkeypatch.setattr(sys, "argv", ["prog", "--dry-run"])
@@ -24,6 +25,11 @@ def test_parse_args_postgres_counts(monkeypatch):
     monkeypatch.setattr(sys, "argv", ["prog", "--postgres-counts"])
     args = parse_args()
     assert args.postgres_counts is True
+
+def test_parse_args_validate(monkeypatch):
+    monkeypatch.setattr(sys, "argv", ["prog", "--validate"])
+    args = parse_args()
+    assert args.validate is True
 
 def test_parse_args_ignores_unknown_args(monkeypatch):
     monkeypatch.setattr(sys, "argv", ["prog", "--cov", "--random-flag"])

@@ -47,6 +47,11 @@ def parse_args():
         action="store_true",
         help="Show row counts for all PostgreSQL tables and exit",
     )
+    parser.add_argument(
+        "--validate",
+        action="store_true",
+        help="Validate migrated data by comparing row counts",
+    )
     args, _ = parser.parse_known_args()
     return args
 
@@ -373,6 +378,60 @@ def main():
         console.print(table)
 
         pg_conn.close()
+        return
+
+    if args.validate:
+        console.print(Panel("Validate Migration", style="cyan"))
+
+        sqlite_copy_path = copy_sqlite_db(SQLITE_PATH)
+        validate_sqlite(sqlite_copy_path)
+        sqlite_conn = sqlite3.connect(sqlite_copy_path, timeout=60)
+
+        sqlite_tables_list = sqlite_conn.execute(
+            "SELECT name FROM sqlite_master WHERE type='table'"
+        ).fetchall()
+        sqlite_all = sorted([r[0] for r in sqlite_tables_list])
+        sqlite_counts = sqlite_row_counts(sqlite_conn, sqlite_all)
+        sqlite_conn.close()
+        shutil.rmtree(sqlite_copy_path.parent, ignore_errors=True)
+
+        pg_conn = psycopg2.connect(MIGRATE_DATABASE_URL)
+        with pg_conn.cursor() as cur:
+            cur.execute(
+                "SELECT table_name FROM information_schema.tables "
+                "WHERE table_schema = 'public'"
+            )
+            pg_all = sorted([r[0] for r in cur.fetchall()])
+        pg_counts = postgres_row_counts(pg_conn, pg_all)
+        pg_conn.close()
+
+        all_tables = sorted(set(sqlite_all) | set(pg_all))
+        mismatches = []
+
+        result_table = Table(title="Validation Results")
+        result_table.add_column("Table", style="cyan")
+        result_table.add_column("SQLite", justify="right", style="yellow")
+        result_table.add_column("PostgreSQL", justify="right", style="green")
+        result_table.add_column("Status", justify="center")
+
+        for t in all_tables:
+            sqlite_count = sqlite_counts.get(t, 0)
+            pg_count = pg_counts.get(t, 0)
+            if sqlite_count == pg_count:
+                status = "[green]✓[/]"
+            elif sqlite_count == -1 or pg_count == -1:
+                status = "[yellow]N/A[/]"
+            else:
+                status = "[red]✗[/]"
+                mismatches.append(t)
+            result_table.add_row(t, f"{sqlite_count:,}", f"{pg_count:,}", status)
+
+        console.print(result_table)
+
+        if mismatches:
+            console.print(f"[red]Mismatches found in:[/] {', '.join(mismatches)}")
+        else:
+            console.print("[green]All tables match![/]")
         return
 
     console.print(

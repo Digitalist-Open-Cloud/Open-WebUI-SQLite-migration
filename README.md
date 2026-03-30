@@ -68,6 +68,9 @@ open-webui-migrate-sqlite --sqlite-counts
 
 # Show row counts in PostgreSQL (after migration)
 open-webui-migrate-sqlite --postgres-counts
+
+# Validate migration (compare SQLite to PostgreSQL counts)
+open-webui-migrate-sqlite --validate
 ```
 
 ## Development
