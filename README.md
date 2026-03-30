@@ -8,7 +8,7 @@ Inspiration from: <https://github.com/taylorwilsdon/open-webui-postgres-migratio
 one of the big differences is that this migration require no input, configurable
 with environment variables, you just run the script, no input needed.
 
-This so you can automate the process, instead of manual input.
+This so you can automate the whole process.
 
 ## Version supported
 
