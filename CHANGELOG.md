@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.1.15] - 2026-03-31
+
+### Security
+
+- Bumbed version of `pygments`, because of [CVE-2026-4539](https://nvd.nist.gov/vuln/detail/CVE-2026-4539)
+
 ## [0.1.14] - 2026-03-31
 
 ### Added

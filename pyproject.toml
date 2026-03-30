@@ -1,6 +1,6 @@
 [project]
 name = "open-webui-sqlite-migration"
-version = "0.1.14"
+version = "0.1.15"
 description = "Migrate Open WebUI from SQLite to PostgreSQL"
 keywords = ["open-webui", "sqlite", "postgres"]
 readme = "README.md"
@@ -12,7 +12,8 @@ requires-python = ">=3.11"
 
 dependencies = [
     "psycopg2-binary>=2.9.11",
-    "rich>=13.9.4"
+    "rich>=14.3.3",
+    "pygments>2.19.2"
 ]
 
 [project.scripts]

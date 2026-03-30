@@ -117,9 +117,7 @@ poetry run pylint $(git ls-files '*.py')
 
 ### SBOM
 
-```shell
-trivy repo --format cyclonedx --output sbom.cdx.json https://github.com/Digitalist-Open-Cloud/Open-WebUI-SQLite-migration
-```
+Included in releases.
 
 ## License
 
