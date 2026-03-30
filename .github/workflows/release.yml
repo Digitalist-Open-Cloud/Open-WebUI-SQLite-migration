@@ -15,5 +15,5 @@ jobs:
       - uses: actions/checkout@v6
       - uses: anchore/sbom-action@v0
         with:
-          format: spdx-json
-          artifact-name: sbom.spdx.json
+          format: cyclonedx-json
+          artifact-name: sbom.cyclonedx.json
