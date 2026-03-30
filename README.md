@@ -10,6 +10,11 @@ with environment variables, you just run the script, no input needed.
 
 This so you can automate the process, instead of manual input.
 
+## Version supported
+
+As we are migrating tables in a specific order, the known Open WebUI version that this tools support
+is at this moment 0.8.12.
+
 ## Install
 
 You can copy the script to you environment and run it, or you could install it:
