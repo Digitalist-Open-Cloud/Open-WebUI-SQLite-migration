@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.1.12] - 2026-03-30
+
+### Added
+
+- List tables alphabetic and nice table output.
+
 ## [0.1.11] - 2026-03-30
 
 ### Added

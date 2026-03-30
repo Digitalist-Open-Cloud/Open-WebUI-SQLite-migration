@@ -20,8 +20,9 @@ import psycopg2
 from rich.console import Console
 from rich.progress import Progress, SpinnerColumn, BarColumn, TextColumn
 from rich.panel import Panel
+from rich.table import Table
 
-__version__ = "0.1.11"
+__version__ = "0.1.12"
 console = Console()
 
 
@@ -330,37 +331,47 @@ def main():
     DRY_RUN = args.dry_run
 
     if args.sqlite_counts:
-        console.print(Panel("SQLite Row Counts", style="cyan"))
         sqlite_copy_path = copy_sqlite_db(SQLITE_PATH)
         validate_sqlite(sqlite_copy_path)
         sqlite_conn = sqlite3.connect(sqlite_copy_path, timeout=60)
         all_tables = sqlite_conn.execute(
             "SELECT name FROM sqlite_master WHERE type='table'"
         ).fetchall()
-        tables = [r[0] for r in all_tables]
+        tables = sorted([r[0] for r in all_tables])
         counts = sqlite_row_counts(sqlite_conn, tables)
-        for table in tables:
-            console.print(f"  {table}: {counts[table]:>10,}")
         total = sum(counts.values())
-        console.print(f"  [bold]Total:[/] {total:>10,}")
+
+        table = Table(title="SQLite Row Counts")
+        table.add_column("Table", style="cyan")
+        table.add_column("Rows", justify="right", style="green")
+        for t in tables:
+            table.add_row(t, f"{counts[t]:,}")
+        table.add_row("[bold]Total[/]", f"[bold]{total:,}[/]")
+        console.print(table)
+
         sqlite_conn.close()
         shutil.rmtree(sqlite_copy_path.parent, ignore_errors=True)
         return
 
     if args.postgres_counts:
-        console.print(Panel("PostgreSQL Row Counts", style="cyan"))
         pg_conn = psycopg2.connect(MIGRATE_DATABASE_URL)
         with pg_conn.cursor() as cur:
             cur.execute(
                 "SELECT table_name FROM information_schema.tables "
                 "WHERE table_schema = 'public'"
             )
-            tables = [r[0] for r in cur.fetchall()]
+            tables = sorted([r[0] for r in cur.fetchall()])
         counts = postgres_row_counts(pg_conn, tables)
-        for table in tables:
-            console.print(f"  {table}: {counts[table]:>10,}")
         total = sum(c for c in counts.values() if c >= 0)
-        console.print(f"  [bold]Total:[/] {total:>10,}")
+
+        table = Table(title="PostgreSQL Row Counts")
+        table.add_column("Table", style="cyan")
+        table.add_column("Rows", justify="right", style="green")
+        for t in tables:
+            table.add_row(t, f"{counts[t]:,}")
+        table.add_row("[bold]Total[/]", f"[bold]{total:,}[/]")
+        console.print(table)
+
         pg_conn.close()
         return
 
