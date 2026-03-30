@@ -87,15 +87,83 @@ def pg_ident(name: str) -> str:
         return f'"{name}"'
     return name
 
+TABLE_ORDER = [
+    "user",
+    "knowledge",
+    "file",
+    "auth",
+    "memory",
+    "tag",
+    "folder",
+    "chat",
+    "chat_message",
+    "chatidtag",
+    "function",
+    "tool",
+    "model",
+    "prompt",
+    "prompt_history",
+    "document",
+    "channel",
+    "message",
+    "message_reaction",
+    "channel_member",
+    "channel_webhook",
+    "oauth_session",
+    "group",
+    "group_member",
+    "api_key",
+    "feedback",
+    "note",
+    "skill",
+    "access_grant",
+    "chat_file",
+    "channel_file",
+    "knowledge_file",
+]
+
+TABLE_DEPENDENCIES = {
+    "chat_file": ["chat", "file"],
+    "channel_file": ["channel", "file"],
+    "knowledge_file": ["knowledge", "file"],
+    "api_key": ["user"],
+    "oauth_session": ["user"],
+    "group_member": ["group", "user"],
+    "channel_webhook": ["channel"],
+    "channel_member": ["channel"],
+    "chat_message": ["chat"],
+    "message_reaction": ["message"],
+}
+
 def sqlite_tables(conn: sqlite3.Connection) -> List[str]:
-    """Get SQLite tables."""
+    """Get SQLite tables in dependency order."""
     cur = conn.execute(
         "SELECT name FROM sqlite_master WHERE type='table'"
     )
-    return [
+    available = {
         r[0] for r in cur.fetchall()
         if r[0] not in {"alembic_version", "migratehistory"}
-    ]
+    }
+
+    ordered = []
+    migrated = set()
+    max_iterations = len(available) + 1
+    for _ in range(max_iterations):
+        remaining = available - migrated
+        if not remaining:
+            break
+        progress_made = False
+        for table in TABLE_ORDER:
+            if table in remaining:
+                deps = TABLE_DEPENDENCIES.get(table, [])
+                if all(d in migrated for d in deps):
+                    ordered.append(table)
+                    migrated.add(table)
+                    progress_made = True
+        if not progress_made:
+            ordered.extend(sorted(remaining))
+            break
+    return ordered
 
 def sqlite_schema(conn: sqlite3.Connection, table: str):
     """Get SQLite schema."""
