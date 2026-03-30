@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.1.13] - 2026-03-30
+
+### Added
+
+- Security policy
+- Simple validation of migration
+
+```shell
+# Validate migration (compare SQLite to PostgreSQL counts)
+open-webui-migrate-sqlite --validate
+```
+
 ## [0.1.12] - 2026-03-30
 
 ### Added
