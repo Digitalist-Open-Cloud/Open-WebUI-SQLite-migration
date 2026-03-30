@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.1.14] - 2026-03-31
+
+### Added
+
+- SBOM generation on new release.
+
 ## [0.1.13] - 2026-03-30
 
 ### Added
