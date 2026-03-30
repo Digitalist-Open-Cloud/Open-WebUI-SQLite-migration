@@ -54,6 +54,22 @@ copy of the SQLite database, to avoid locking etc.
 - If all succeeds, restart Open WebUI with `DATABASE_URL` set.
 - You should now be running Open WebUI with Postgres (if you have info logs from Open WebUI, you should see `Context impl PostgresqlImpl`).
 
+## Usage
+
+```shell
+# Run migration
+open-webui-migrate-sqlite
+
+# Dry run (preview without writing)
+open-webui-migrate-sqlite --dry-run
+
+# Show row counts in SQLite (before migration)
+open-webui-migrate-sqlite --sqlite-counts
+
+# Show row counts in PostgreSQL (after migration)
+open-webui-migrate-sqlite --postgres-counts
+```
+
 ## Development
 
 Poetry is used.

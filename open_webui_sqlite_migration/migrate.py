@@ -21,7 +21,7 @@ from rich.console import Console
 from rich.progress import Progress, SpinnerColumn, BarColumn, TextColumn
 from rich.panel import Panel
 
-__version__ = "0.1.10"
+__version__ = "0.1.11"
 console = Console()
 
 
@@ -35,6 +35,16 @@ def parse_args():
         "--dry-run",
         action="store_true",
         help="Validate and preview migration without writing to PostgreSQL",
+    )
+    parser.add_argument(
+        "--sqlite-counts",
+        action="store_true",
+        help="Show row counts for all SQLite tables and exit",
+    )
+    parser.add_argument(
+        "--postgres-counts",
+        action="store_true",
+        help="Show row counts for all PostgreSQL tables and exit",
     )
     args, _ = parser.parse_known_args()
     return args
@@ -80,6 +90,29 @@ def validate_postgres(db_url: str) -> None:
     """Validate connection to Postgres."""
     conn = psycopg2.connect(db_url)
     conn.close()
+
+def sqlite_row_counts(conn: sqlite3.Connection, tables: List[str]) -> Dict[str, int]:
+    """Get row counts for all tables."""
+    counts = {}
+    for table in tables:
+        try:
+            count = conn.execute(f'SELECT COUNT(*) FROM "{table}"').fetchone()[0]
+            counts[table] = count
+        except sqlite3.Error:
+            counts[table] = -1
+    return counts
+
+def postgres_row_counts(conn, tables: List[str]) -> Dict[str, int]:
+    """Get row counts for all tables."""
+    counts = {}
+    with conn.cursor() as cur:
+        for table in tables:
+            try:
+                cur.execute(f'SELECT COUNT(*) FROM {pg_ident(table)}')
+                counts[table] = cur.fetchone()[0]
+            except psycopg2.Error:
+                counts[table] = -1
+    return counts
 
 def pg_ident(name: str) -> str:
     """Protected postgres names."""
@@ -295,6 +328,42 @@ def main():
     global DRY_RUN
     args = parse_args()
     DRY_RUN = args.dry_run
+
+    if args.sqlite_counts:
+        console.print(Panel("SQLite Row Counts", style="cyan"))
+        sqlite_copy_path = copy_sqlite_db(SQLITE_PATH)
+        validate_sqlite(sqlite_copy_path)
+        sqlite_conn = sqlite3.connect(sqlite_copy_path, timeout=60)
+        all_tables = sqlite_conn.execute(
+            "SELECT name FROM sqlite_master WHERE type='table'"
+        ).fetchall()
+        tables = [r[0] for r in all_tables]
+        counts = sqlite_row_counts(sqlite_conn, tables)
+        for table in tables:
+            console.print(f"  {table}: {counts[table]:>10,}")
+        total = sum(counts.values())
+        console.print(f"  [bold]Total:[/] {total:>10,}")
+        sqlite_conn.close()
+        shutil.rmtree(sqlite_copy_path.parent, ignore_errors=True)
+        return
+
+    if args.postgres_counts:
+        console.print(Panel("PostgreSQL Row Counts", style="cyan"))
+        pg_conn = psycopg2.connect(MIGRATE_DATABASE_URL)
+        with pg_conn.cursor() as cur:
+            cur.execute(
+                "SELECT table_name FROM information_schema.tables "
+                "WHERE table_schema = 'public'"
+            )
+            tables = [r[0] for r in cur.fetchall()]
+        counts = postgres_row_counts(pg_conn, tables)
+        for table in tables:
+            console.print(f"  {table}: {counts[table]:>10,}")
+        total = sum(c for c in counts.values() if c >= 0)
+        console.print(f"  [bold]Total:[/] {total:>10,}")
+        pg_conn.close()
+        return
+
     console.print(
         Panel(
             f"SQLite to PostgreSQL Migration "

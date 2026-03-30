@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.1.11] - 2026-03-30
+
+### Added
+
+- Options to list number of rows in Postgres and SQLite.
+
+```shell
+# Show row counts in SQLite (before migration)
+open-webui-migrate-sqlite --sqlite-counts
+
+# Show row counts in PostgreSQL (after migration)
+open-webui-migrate-sqlite --postgres-counts
+```
+
 ## [0.1.10] - 2026-03-30
 
 ### Changed
