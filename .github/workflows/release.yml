@@ -1,0 +1,19 @@
+name: Release
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  actions: read
+  contents: write
+
+jobs:
+  sbom:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: anchore/sbom-action@v0
+        with:
+          format: spdx-json
+          artifact-name: sbom.spdx.json
