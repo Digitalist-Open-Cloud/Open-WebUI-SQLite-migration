@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.1.18] - 2026-04-13
+
+### Fixed
+
+- Only allow text/varchar for empty strings.
+
 ## [0.1.17] - 2026-04-13
 
 ### Added

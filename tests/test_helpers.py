@@ -63,3 +63,10 @@ def test_normalize_row_group_description():
     pg_types = {"description": "text"}
     result = normalize_row(row, columns, pg_types, table_name="group")
     assert result == ("",)
+
+def test_normalize_row_date_not_null_stays_none():
+    row = (None,)
+    columns = ["date_of_birth"]
+    pg_types = {"date_of_birth": "date"}
+    result = normalize_row(row, columns, pg_types, table_name="user")
+    assert result == (None,)

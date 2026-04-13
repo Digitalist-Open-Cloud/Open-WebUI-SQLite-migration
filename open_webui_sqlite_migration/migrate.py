@@ -22,7 +22,7 @@ from rich.progress import Progress, SpinnerColumn, BarColumn, TextColumn
 from rich.panel import Panel
 from rich.table import Table
 
-__version__ = "0.1.17"
+__version__ = "0.1.18"
 console = Console()
 
 
@@ -240,6 +240,9 @@ NOT_NULL_COLUMNS = {
 }
 
 
+TEXT_TYPES = {"text", "character varying", "varchar"}
+
+
 def normalize_row(row, columns, pg_types, table_name=None):
     """Normalize DB row in Postgres."""
     out = []
@@ -247,7 +250,7 @@ def normalize_row(row, columns, pg_types, table_name=None):
         col_type = pg_types.get(col)
         if value is None:
             not_null_cols = NOT_NULL_COLUMNS.get(table_name, set())
-            if col in not_null_cols:
+            if col in not_null_cols and col_type in TEXT_TYPES:
                 out.append("")
             else:
                 out.append(None)
