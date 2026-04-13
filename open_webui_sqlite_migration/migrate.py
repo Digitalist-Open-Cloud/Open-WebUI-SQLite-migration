@@ -22,7 +22,7 @@ from rich.progress import Progress, SpinnerColumn, BarColumn, TextColumn
 from rich.panel import Panel
 from rich.table import Table
 
-__version__ = "0.1.18"
+__version__ = "0.1.19"
 console = Console()
 
 
@@ -286,9 +286,9 @@ class CopyStream:
         writer = csv.writer(
             output,
             lineterminator="\n",
-            quoting=csv.QUOTE_ALL,
+            quoting=csv.QUOTE_MINIMAL,
         )
-        writer.writerow("" if v is None else v for v in row)
+        writer.writerow(r"\N" if v is None else v for v in row)
         return output.getvalue()
 
     def read(self, size=8192):

@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.1.19] - 2026-04-1
+
+### Fixed
+
+- Issue with `date_of_birth` in `users` if empty.
+
 ## [0.1.18] - 2026-04-13
 
 ### Fixed

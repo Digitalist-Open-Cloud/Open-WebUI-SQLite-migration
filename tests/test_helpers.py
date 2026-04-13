@@ -70,3 +70,31 @@ def test_normalize_row_date_not_null_stays_none():
     pg_types = {"date_of_birth": "date"}
     result = normalize_row(row, columns, pg_types, table_name="user")
     assert result == (None,)
+
+def test_normalize_row_user_date_of_birth_not_in_not_null_columns():
+    row = (None,)
+    columns = ["date_of_birth"]
+    pg_types = {"date_of_birth": "date"}
+    result = normalize_row(row, columns, pg_types, table_name="user")
+    assert result == (None,)
+
+def test_normalize_row_user_name_text_not_null():
+    row = (None,)
+    columns = ["name"]
+    pg_types = {"name": "text"}
+    result = normalize_row(row, columns, pg_types, table_name="user")
+    assert result == (None,)
+
+def test_copy_stream_handles_none():
+    from open_webui_sqlite_migration.migrate import CopyStream
+    row_iter = iter([(None, "test"), ("value", None)])
+    stream = CopyStream(row_iter)
+    first_line = stream.read(1024)
+    print(f"First line: {repr(first_line)}")
+
+def test_copy_stream_handles_not_null_text():
+    from open_webui_sqlite_migration.migrate import CopyStream
+    row_iter = iter([("", "test")])
+    stream = CopyStream(row_iter)
+    first_line = stream.read(1024)
+    print(f"Not null text: {repr(first_line)}")
