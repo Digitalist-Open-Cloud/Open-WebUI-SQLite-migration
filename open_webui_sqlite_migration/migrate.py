@@ -22,7 +22,7 @@ from rich.progress import Progress, SpinnerColumn, BarColumn, TextColumn
 from rich.panel import Panel
 from rich.table import Table
 
-__version__ = "0.1.19"
+__version__ = "0.1.20"
 console = Console()
 
 
@@ -286,9 +286,9 @@ class CopyStream:
         writer = csv.writer(
             output,
             lineterminator="\n",
-            quoting=csv.QUOTE_MINIMAL,
+            quoting=csv.QUOTE_ALL,
         )
-        writer.writerow(r"\N" if v is None else v for v in row)
+        writer.writerow("" if v is None else v for v in row)
         return output.getvalue()
 
     def read(self, size=8192):
@@ -336,7 +336,7 @@ def migrate_table(sqlite_conn: sqlite3.Connection, pg_conn, table: str):
     with pg_conn.cursor() as cur:
         cur.copy_expert(
             f"COPY {pg_ident(table)} ({', '.join(columns)}) "
-            f"FROM STDIN WITH CSV",
+            f"FROM STDIN WITH CSV NULL ''",
             CopyStream(row_iter),
         )
     elapsed = time.time() - start_time
