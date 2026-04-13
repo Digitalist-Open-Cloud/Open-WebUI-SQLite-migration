@@ -234,13 +234,22 @@ def stream_sqlite_rows(
         for row in rows:
             yield row
 
-def normalize_row(row, columns, pg_types):
+NOT_NULL_COLUMNS = {
+    "prompt": {"content"},
+}
+
+
+def normalize_row(row, columns, pg_types, table_name=None):
     """Normalize DB row in Postgres."""
     out = []
     for value, col in zip(row, columns):
         col_type = pg_types.get(col)
         if value is None:
-            out.append(None)
+            not_null_cols = NOT_NULL_COLUMNS.get(table_name, set())
+            if col in not_null_cols:
+                out.append("")
+            else:
+                out.append(None)
         elif col_type == "jsonb":
             if isinstance(value, (dict, list)):
                 out.append(json.dumps(value))
@@ -273,7 +282,7 @@ class CopyStream:
         writer = csv.writer(
             output,
             lineterminator="\n",
-            quoting=csv.QUOTE_MINIMAL,
+            quoting=csv.QUOTE_ALL,
         )
         writer.writerow("" if v is None else v for v in row)
         return output.getvalue()
@@ -316,7 +325,7 @@ def migrate_table(sqlite_conn: sqlite3.Connection, pg_conn, table: str):
     pg_conn.commit()
 
     row_iter = (
-        normalize_row(row, columns, pg_types)
+        normalize_row(row, columns, pg_types, table)
         for row in stream_sqlite_rows(sqlite_conn, table, columns)
     )
 

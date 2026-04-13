@@ -42,3 +42,17 @@ def test_normalize_row_none_mixed_with_other_values():
     pg_types = {"meta": "jsonb", "data": "jsonb"}
 
     assert normalize_row(row, columns, pg_types) == (None, '{"a": 1}')
+
+def test_normalize_row_not_null_column():
+    row = (None,)
+    columns = ["content"]
+    pg_types = {"content": "text"}
+    result = normalize_row(row, columns, pg_types, table_name="prompt")
+    assert result == ("",)
+
+def test_normalize_row_not_null_column_with_value():
+    row = ("test prompt content",)
+    columns = ["content"]
+    pg_types = {"content": "text"}
+    result = normalize_row(row, columns, pg_types, table_name="prompt")
+    assert result == ("test prompt content",)
