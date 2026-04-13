@@ -56,3 +56,10 @@ def test_normalize_row_not_null_column_with_value():
     pg_types = {"content": "text"}
     result = normalize_row(row, columns, pg_types, table_name="prompt")
     assert result == ("test prompt content",)
+
+def test_normalize_row_group_description():
+    row = (None,)
+    columns = ["description"]
+    pg_types = {"description": "text"}
+    result = normalize_row(row, columns, pg_types, table_name="group")
+    assert result == ("",)

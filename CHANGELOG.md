@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.1.17] - 2026-04-13
+
+### Added
+
+- Handle NULL values also for groups description, which will be converted to strings.
+
 ## [0.1.16] - 2026-04-13
 
 ### Added

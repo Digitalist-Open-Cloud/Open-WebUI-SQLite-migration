@@ -22,7 +22,7 @@ from rich.progress import Progress, SpinnerColumn, BarColumn, TextColumn
 from rich.panel import Panel
 from rich.table import Table
 
-__version__ = "0.1.16"
+__version__ = "0.1.17"
 console = Console()
 
 
@@ -236,6 +236,7 @@ def stream_sqlite_rows(
 
 NOT_NULL_COLUMNS = {
     "prompt": {"content"},
+    "group": {"description"},
 }
 
 
