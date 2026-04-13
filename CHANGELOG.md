@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.1.16] - 2026-04-13
+
+### Added
+
+- Handle NULL values, and make sure empty strings are properly quoted.
+
 ## [0.1.15] - 2026-03-31
 
 ### Security
