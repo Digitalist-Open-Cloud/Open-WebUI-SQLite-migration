@@ -32,16 +32,17 @@ def test_normalize_row_dict():
 def test_normalize_row_none_value():
     row = (None,)
     columns = ["data"]
-    pg_types = {"data": "jsonb"}  # type shouldn't matter for None
-
-    assert normalize_row(row, columns, pg_types) == (None,)
+    pg_types = {"data": "jsonb"}
+    result = normalize_row(row, columns, pg_types)
+    assert "__NULL__" in result[0]
 
 def test_normalize_row_none_mixed_with_other_values():
     row = (None, '{"a": 1}')
     columns = ["meta", "data"]
     pg_types = {"meta": "jsonb", "data": "jsonb"}
-
-    assert normalize_row(row, columns, pg_types) == (None, '{"a": 1}')
+    result = normalize_row(row, columns, pg_types)
+    assert "__NULL__" in result[0]
+    assert result[1] == '{"a": 1}'
 
 def test_normalize_row_not_null_column():
     row = (None,)
@@ -64,26 +65,26 @@ def test_normalize_row_group_description():
     result = normalize_row(row, columns, pg_types, table_name="group")
     assert result == ("",)
 
-def test_normalize_row_date_not_null_stays_none():
+def test_normalize_row_date_returns_null_marker():
     row = (None,)
     columns = ["date_of_birth"]
     pg_types = {"date_of_birth": "date"}
     result = normalize_row(row, columns, pg_types, table_name="user")
-    assert result == (None,)
+    assert result == ("__NULL__",)
 
-def test_normalize_row_user_date_of_birth_not_in_not_null_columns():
+def test_normalize_row_user_date_of_birth_not_null():
     row = (None,)
     columns = ["date_of_birth"]
     pg_types = {"date_of_birth": "date"}
     result = normalize_row(row, columns, pg_types, table_name="user")
-    assert result == (None,)
+    assert result == ("__NULL__",)
 
-def test_normalize_row_user_name_text_not_null():
+def test_normalize_row_user_name_returns_null_marker():
     row = (None,)
     columns = ["name"]
     pg_types = {"name": "text"}
     result = normalize_row(row, columns, pg_types, table_name="user")
-    assert result == (None,)
+    assert result == ("__NULL__",)
 
 def test_copy_stream_handles_none():
     from open_webui_sqlite_migration.migrate import CopyStream

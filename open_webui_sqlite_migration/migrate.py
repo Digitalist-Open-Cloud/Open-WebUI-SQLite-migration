@@ -253,7 +253,7 @@ def normalize_row(row, columns, pg_types, table_name=None):
             if col in not_null_cols and col_type in TEXT_TYPES:
                 out.append("")
             else:
-                out.append(None)
+                out.append("__NULL__")
         elif col_type == "jsonb":
             if isinstance(value, (dict, list)):
                 out.append(json.dumps(value))
@@ -266,6 +266,9 @@ def normalize_row(row, columns, pg_types, table_name=None):
         else:
             out.append(value)
     return tuple(out)
+
+
+COPY_NULL_MARKER = "__NULL__"
 
 class CopyStream:
     """Streaming file-like object for psycopg2 COPY."""
@@ -286,7 +289,7 @@ class CopyStream:
         writer = csv.writer(
             output,
             lineterminator="\n",
-            quoting=csv.QUOTE_ALL,
+            quoting=csv.QUOTE_MINIMAL,
         )
         writer.writerow("" if v is None else v for v in row)
         return output.getvalue()
@@ -336,7 +339,7 @@ def migrate_table(sqlite_conn: sqlite3.Connection, pg_conn, table: str):
     with pg_conn.cursor() as cur:
         cur.copy_expert(
             f"COPY {pg_ident(table)} ({', '.join(columns)}) "
-            f"FROM STDIN WITH CSV NULL ''",
+            f"FROM STDIN WITH CSV NULL '{COPY_NULL_MARKER}'",
             CopyStream(row_iter),
         )
     elapsed = time.time() - start_time
