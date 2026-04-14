@@ -22,7 +22,7 @@ from rich.progress import Progress, SpinnerColumn, BarColumn, TextColumn
 from rich.panel import Panel
 from rich.table import Table
 
-__version__ = "0.1.20"
+__version__ = "0.1.21"
 console = Console()
 
 

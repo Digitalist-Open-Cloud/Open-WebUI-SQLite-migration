@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.1.21] - 2026-04-1
+
+### Fixed
+
+- Issue with null values.
+
 ## [0.1.20] - 2026-04-1
 
 ### Fixed
