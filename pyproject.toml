@@ -1,6 +1,6 @@
 [project]
 name = "open-webui-sqlite-migration"
-version = "0.1.21"
+version = "0.1.22"
 description = "Migrate Open WebUI from SQLite to PostgreSQL"
 keywords = ["open-webui", "sqlite", "postgres"]
 readme = "README.md"
@@ -34,7 +34,7 @@ build-backend = "poetry.core.masonry.api"
 package-mode = true
 
 [tool.poetry.group.dev.dependencies]
-pytest = "^9.0.2"
+pytest = "^9.0.3"
 pytest-mock = "^3.12"
 pytest-cov = "^7.1.0"
 

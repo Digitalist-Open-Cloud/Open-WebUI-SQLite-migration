@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.1.22] - 2026-04-1
+
+### Added
+
+- Fail if unknown option is provided.
+
+### Security
+
+- Updated dependency pytest to 9.0.3., CVE-2025-71176.
+
 ## [0.1.21] - 2026-04-1
 
 ### Fixed

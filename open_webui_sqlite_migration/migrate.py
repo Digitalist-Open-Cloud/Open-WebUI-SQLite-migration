@@ -4,6 +4,7 @@ SQLite to PostgreSQL migration for Open WebUI
 """
 
 import os
+import sys
 import json
 import sqlite3
 import csv
@@ -22,7 +23,7 @@ from rich.progress import Progress, SpinnerColumn, BarColumn, TextColumn
 from rich.panel import Panel
 from rich.table import Table
 
-__version__ = "0.1.21"
+__version__ = "0.1.22"
 console = Console()
 
 
@@ -52,7 +53,11 @@ def parse_args():
         action="store_true",
         help="Validate migrated data by comparing row counts",
     )
-    args, _ = parser.parse_known_args()
+    args, unknown = parser.parse_known_args()
+    if unknown:
+        console.print(f"[yellow]Warning: Unknown option(s): {', '.join(unknown)}[/yellow]")
+        parser.print_help()
+        sys.exit(1)
     return args
 
 DRY_RUN = False

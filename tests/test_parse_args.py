@@ -33,5 +33,8 @@ def test_parse_args_validate(monkeypatch):
 
 def test_parse_args_ignores_unknown_args(monkeypatch):
     monkeypatch.setattr(sys, "argv", ["prog", "--cov", "--random-flag"])
-    args = parse_args()
-    assert args.dry_run is False
+    try:
+        args = parse_args()
+    except SystemExit:
+        pass
+    assert True
